@@ -12,12 +12,18 @@ export default async function DashboardPage() {
   const userId = session.user.id
   const limitCheck = await checkReceiptLimit(userId)
 
-  const receipts = await prisma.receipt.findMany({
+  const receiptsData = await prisma.receipt.findMany({
     where: { userId },
     include: { category: true },
     orderBy: { date: 'desc' },
     take: 20,
   })
+
+  // Convert Date objects to strings for client component
+  const receipts = receiptsData.map(receipt => ({
+    ...receipt,
+    date: receipt.date.toISOString(),
+  }))
 
   const stats = await prisma.receipt.aggregate({
     where: { userId },

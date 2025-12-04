@@ -14,7 +14,7 @@ export default async function ReceiptDetailPage({
     redirect('/auth/signin')
   }
 
-  const receipt = await prisma.receipt.findFirst({
+  const receiptData = await prisma.receipt.findFirst({
     where: {
       id: params.id,
       userId: session.user.id,
@@ -24,8 +24,17 @@ export default async function ReceiptDetailPage({
     },
   })
 
-  if (!receipt) {
+  if (!receiptData) {
     redirect('/dashboard')
+  }
+
+  // Convert Date objects to strings for client component
+  const receipt = {
+    ...receiptData,
+    date: receiptData.date.toISOString(),
+    warrantyExpiresAt: receiptData.warrantyExpiresAt
+      ? receiptData.warrantyExpiresAt.toISOString()
+      : null,
   }
 
   return <ReceiptDetail receipt={receipt} />
