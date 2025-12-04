@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  subscriptionTier String @default("FREE") // FREE, PRO, BUSINESS, ENTERPRISE
+  subscriptionExpiresAt DateTime?
+  receiptsCount Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  receipts      Receipt[]
+  categories    Category[]
+  integrations  Integration[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Receipt {
+  id              String   @id @default(cuid())
+  userId          String
+  merchant        String
+  date            DateTime
+  total           Float
+  tax             Float?   @default(0)
+  subtotal        Float?
+  items           Json?    // Array of items with name, price, quantity
+  paymentMethod   String?  // cash, credit, debit, etc.
+  categoryId      String?
+  tags            String[] // For projects/clients
+  notes           String?
+  imageUrl        String   // S3 URL or local path
+  imageKey        String?  // S3 key
+  ocrData         Json?    // Raw OCR extraction data
+  extractionStatus String  @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  warrantyExpiresAt DateTime?
+  warrantyItem     String?
+  source           String  @default("MANUAL") // MANUAL, EMAIL, GMAIL, OUTLOOK, MOBILE, EXTENSION
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([userId])
+  @@index([date])
+  @@index([merchant])
+  @@index([categoryId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  userId      String?
+  name        String
+  description String?
+  irsCategory String?  // For tax reporting (meals, travel, office, etc.)
+  color       String?  @default("#3b82f6")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  receipts  Receipt[]
+
+  @@unique([userId, name])
+}
+
+model Integration {
+  id            String   @id @default(cuid())
+  userId        String
+  provider      String   // QUICKBOOKS, XERO, FRESHBOOKS, GOOGLE_DRIVE, DROPBOX, SLACK
+  accessToken   String?  @db.Text
+  refreshToken  String?  @db.Text
+  expiresAt     DateTime?
+  config        Json?    // Provider-specific configuration
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+}
+
+model EmailForward {
+  id          String   @id @default(cuid())
+  fromEmail   String
+  subject     String
+  body        String?  @db.Text
+  attachments Json?    // Array of attachment metadata
+  processed   Boolean  @default(false)
+  receiptId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([processed])
+}
+
+
