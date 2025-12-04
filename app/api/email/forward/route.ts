@@ -79,7 +79,10 @@ export async function POST(request: NextRequest) {
                 categoryId,
                 imageUrl,
                 imageKey: fileKey,
-                ocrData: extractedData,
+                ocrData: {
+                  ...extractedData,
+                  date: extractedData.date ? extractedData.date.toISOString() : null,
+                } as any,
                 extractionStatus: 'COMPLETED',
                 source: 'EMAIL',
               },

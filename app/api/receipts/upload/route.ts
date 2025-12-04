@@ -104,7 +104,10 @@ export async function POST(request: NextRequest) {
         notes: notes || null,
         imageUrl,
         imageKey: fileKey,
-        ocrData: extractedData,
+        ocrData: {
+          ...extractedData,
+          date: extractedData.date ? extractedData.date.toISOString() : null,
+        } as any,
         extractionStatus: 'COMPLETED',
       },
       include: {
