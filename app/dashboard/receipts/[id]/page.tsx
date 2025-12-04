@@ -28,12 +28,15 @@ export default async function ReceiptDetailPage({
     redirect('/dashboard')
   }
 
-  // Convert Date objects to strings for client component
+  // Convert Date objects to strings and properly type items for client component
   const receipt = {
     ...receiptData,
     date: receiptData.date.toISOString(),
     warrantyExpiresAt: receiptData.warrantyExpiresAt
       ? receiptData.warrantyExpiresAt.toISOString()
+      : null,
+    items: Array.isArray(receiptData.items)
+      ? (receiptData.items as Array<{ name: string; price: number; quantity: number }>)
       : null,
   }
 
