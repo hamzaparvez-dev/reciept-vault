@@ -6,6 +6,8 @@ import nodemailer from 'nodemailer'
 
 // This endpoint would be called by an email service (like SendGrid, Mailgun, etc.)
 // when an email is forwarded to receipts@receiptvault.com
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
