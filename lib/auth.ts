@@ -5,6 +5,16 @@ import GoogleProvider from 'next-auth/providers/google'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 
+// Check required environment variables
+if (!process.env.NEXTAUTH_SECRET) {
+  console.error('❌ NEXTAUTH_SECRET is not set. Please configure it in your environment variables.')
+  throw new Error('NEXTAUTH_SECRET environment variable is required')
+}
+
+if (!process.env.NEXTAUTH_URL) {
+  console.warn('⚠️ NEXTAUTH_URL is not set. This may cause issues with authentication callbacks.')
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
