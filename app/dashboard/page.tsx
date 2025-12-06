@@ -1,15 +1,16 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import ReceiptUpload from '@/components/ReceiptUpload'
 import ReceiptList from '@/components/ReceiptList'
 import { checkReceiptLimit } from '@/lib/subscription'
+import { syncUserToDatabase } from '@/lib/user-sync'
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
+  const { userId } = await auth()
+  if (!userId) return null
 
-  const userId = session.user.id
+  // Sync user to database
+  await syncUserToDatabase(userId)
   const limitCheck = await checkReceiptLimit(userId)
 
   const receiptsData = await prisma.receipt.findMany({
@@ -34,30 +35,30 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Manage your receipts and track expenses</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+        <p className="text-muted-foreground">Manage your receipts and track expenses</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="text-sm text-gray-600 mb-1">Total Receipts</div>
-          <div className="text-3xl font-bold text-gray-900">
+        <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+          <div className="text-sm text-muted-foreground mb-1">Total Receipts</div>
+          <div className="text-3xl font-bold text-card-foreground">
             {stats._count || 0}
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="text-sm text-gray-600 mb-1">Total Spent</div>
-          <div className="text-3xl font-bold text-gray-900">
+        <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+          <div className="text-sm text-muted-foreground mb-1">Total Spent</div>
+          <div className="text-3xl font-bold text-card-foreground">
             ${(stats._sum.total || 0).toFixed(2)}
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <div className="text-sm text-gray-600 mb-1">This Month</div>
-          <div className="text-3xl font-bold text-gray-900">
+        <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+          <div className="text-sm text-muted-foreground mb-1">This Month</div>
+          <div className="text-3xl font-bold text-card-foreground">
             {limitCheck.current} / {limitCheck.limit === Infinity ? '∞' : limitCheck.limit}
           </div>
           {limitCheck.limit !== Infinity && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {limitCheck.limit - limitCheck.current} remaining
             </div>
           )}
@@ -69,7 +70,7 @@ export default async function DashboardPage() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Receipts</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-4">Recent Receipts</h2>
         <ReceiptList initialReceipts={receipts} />
       </div>
     </div>

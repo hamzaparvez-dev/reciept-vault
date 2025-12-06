@@ -1,23 +1,26 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import ReceiptDetail from '@/components/ReceiptDetail'
+import { syncUserToDatabase } from '@/lib/user-sync'
 
 export default async function ReceiptDetailPage({
   params,
 }: {
   params: { id: string }
 }) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
-    redirect('/auth/signin')
+  const { userId } = await auth()
+  if (!userId) {
+    redirect('/sign-in')
   }
+
+  // Sync user to database
+  await syncUserToDatabase(userId)
 
   const receiptData = await prisma.receipt.findFirst({
     where: {
       id: params.id,
-      userId: session.user.id,
+      userId: userId,
     },
     include: {
       category: true,

@@ -59,49 +59,49 @@ export default function ReceiptList({ initialReceipts }: ReceiptListProps) {
 
   if (receipts.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-12 text-center">
+      <div className="bg-card rounded-lg shadow-md border border-border p-12 text-center">
         <div className="text-6xl mb-4">📋</div>
-        <p className="text-gray-600">No receipts yet. Upload your first receipt to get started!</p>
+        <p className="text-muted-foreground">No receipts yet. Upload your first receipt to get started!</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-4 border-b">
+    <div className="bg-card rounded-lg shadow-md border border-border">
+      <div className="p-4 border-b border-border">
         <input
           type="text"
           placeholder="Search receipts..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
-      <div className="divide-y">
+      <div className="divide-y divide-border">
         {filteredReceipts.map(receipt => (
-          <div key={receipt.id} className="p-4 hover:bg-gray-50">
+          <div key={receipt.id} className="p-4 hover:bg-accent/50 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="font-semibold text-lg">{receipt.merchant}</h3>
+                  <h3 className="font-semibold text-lg text-card-foreground">{receipt.merchant}</h3>
                   {receipt.category && (
                     <span
                       className="px-2 py-1 text-xs rounded-full text-white"
                       style={{
-                        backgroundColor: receipt.category.color || '#3b82f6',
+                        backgroundColor: receipt.category.color || 'var(--primary)',
                       }}
                     >
                       {receipt.category.name}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span>{format(new Date(receipt.date), 'MMM d, yyyy')}</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-card-foreground">
                     ${receipt.total.toFixed(2)}
                   </span>
                   {receipt.tax && receipt.tax > 0 && (
-                    <span className="text-gray-500">Tax: ${receipt.tax.toFixed(2)}</span>
+                    <span className="text-muted-foreground">Tax: ${receipt.tax.toFixed(2)}</span>
                   )}
                 </div>
                 {receipt.tags.length > 0 && (
@@ -109,7 +109,7 @@ export default function ReceiptList({ initialReceipts }: ReceiptListProps) {
                     {receipt.tags.map(tag => (
                       <span
                         key={tag}
-                        className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
+                        className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded"
                       >
                         {tag}
                       </span>
@@ -120,13 +120,13 @@ export default function ReceiptList({ initialReceipts }: ReceiptListProps) {
               <div className="flex items-center gap-2">
                 <Link
                   href={`/dashboard/receipts/${receipt.id}`}
-                  className="px-4 py-2 text-sm text-primary-600 hover:text-primary-700"
+                  className="px-4 py-2 text-sm text-primary hover:text-primary/80 transition-colors"
                 >
                   View
                 </Link>
                 <button
                   onClick={() => handleDelete(receipt.id)}
-                  className="px-4 py-2 text-sm text-red-600 hover:text-red-700"
+                  className="px-4 py-2 text-sm text-destructive hover:text-destructive/80 transition-colors"
                 >
                   Delete
                 </button>

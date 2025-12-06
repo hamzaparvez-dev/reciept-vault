@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -10,15 +9,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const { userId } = await auth()
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const receipt = await prisma.receipt.findFirst({
       where: {
         id: params.id,
-        userId: session.user.id,
+        userId: userId,
       },
       include: {
         category: true,
@@ -44,8 +43,8 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const { userId } = await auth()
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -55,7 +54,7 @@ export async function PATCH(
     const receipt = await prisma.receipt.updateMany({
       where: {
         id: params.id,
-        userId: session.user.id,
+        userId: userId,
       },
       data: {
         ...(merchant && { merchant }),
@@ -103,7 +102,7 @@ export async function DELETE(
     const receipt = await prisma.receipt.deleteMany({
       where: {
         id: params.id,
-        userId: session.user.id,
+        userId: userId,
       },
     })
 
@@ -113,7 +112,7 @@ export async function DELETE(
 
     // Update user's receipt count
     await prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: userId },
       data: {
         receiptsCount: {
           decrement: 1,

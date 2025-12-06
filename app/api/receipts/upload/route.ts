@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { extractReceiptData, uploadToS3 } from '@/lib/ocr'
 import { categorizeReceipt } from '@/lib/categorization'
 import { checkReceiptLimit } from '@/lib/subscription'
+import { syncUserToDatabase } from '@/lib/user-sync'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const { userId } = await auth()
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    // Sync user to database
+    await syncUserToDatabase(userId)
 
     // Check receipt limit
     const limitCheck = await checkReceiptLimit(userId)

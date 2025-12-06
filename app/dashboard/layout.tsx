@@ -1,8 +1,6 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { signOut } from 'next-auth/react'
 import LogoutButton from '@/components/LogoutButton'
 
 export default async function DashboardLayout({
@@ -10,28 +8,28 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession(authOptions)
+  const { userId } = await auth()
 
-  if (!session) {
-    redirect('/auth/signin')
+  if (!userId) {
+    redirect('/sign-in')
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <nav className="bg-card shadow-sm border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link href="/dashboard" className="text-2xl font-bold text-primary-600">
+            <Link href="/dashboard" className="text-2xl font-bold text-primary">
               ReceiptVault
             </Link>
             <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-gray-700 hover:text-primary-600">
+              <Link href="/dashboard" className="text-muted-foreground hover:text-primary transition-colors">
                 Receipts
               </Link>
-              <Link href="/dashboard/reports" className="text-gray-700 hover:text-primary-600">
+              <Link href="/dashboard/reports" className="text-muted-foreground hover:text-primary transition-colors">
                 Reports
               </Link>
-              <Link href="/dashboard/settings" className="text-gray-700 hover:text-primary-600">
+              <Link href="/dashboard/settings" className="text-muted-foreground hover:text-primary transition-colors">
                 Settings
               </Link>
               <LogoutButton />

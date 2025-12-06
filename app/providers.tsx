@@ -1,9 +1,8 @@
 'use client'
 
-import { SessionProvider } from 'next-auth/react'
-
+// Clerk is now handled in layout.tsx via ClerkProvider
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>
+  return <>{children}</>
 }
 
 

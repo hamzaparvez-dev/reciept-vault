@@ -1,18 +1,21 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import SettingsView from '@/components/SettingsView'
+import { syncUserToDatabase } from '@/lib/user-sync'
 
 export default async function SettingsPage() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
+  const { userId } = await auth()
+  if (!userId) return null
+
+  // Sync user to database
+  await syncUserToDatabase(userId)
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: userId },
   })
 
   const categories = await prisma.category.findMany({
-    where: { userId: session.user.id },
+    where: { userId: userId },
     orderBy: { name: 'asc' },
   })
 

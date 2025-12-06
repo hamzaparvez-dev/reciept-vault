@@ -48,35 +48,35 @@ export default function ReceiptUpload() {
   })
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">Upload Receipt</h3>
+    <div className="bg-card rounded-lg shadow-md border border-border p-6">
+      <h3 className="text-lg font-semibold mb-4 text-card-foreground">Upload Receipt</h3>
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
           isDragActive
-            ? 'border-primary-500 bg-primary-50'
-            : 'border-gray-300 hover:border-primary-400'
+            ? 'border-primary bg-primary/10'
+            : 'border-border hover:border-primary/50'
         }`}
       >
         <input {...getInputProps()} />
         {uploading ? (
-          <div className="text-primary-600">Uploading and processing...</div>
+          <div className="text-primary">Uploading and processing...</div>
         ) : (
           <>
             <div className="text-4xl mb-4">📄</div>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {isDragActive
                 ? 'Drop the receipt here'
                 : 'Drag & drop a receipt, or click to select'}
             </p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Supports JPG, PNG, and PDF
             </p>
           </>
         )}
       </div>
       {error && (
-        <div className="mt-4 p-3 bg-red-50 text-red-700 rounded">
+        <div className="mt-4 p-3 bg-destructive/10 text-destructive-foreground rounded border border-destructive/20">
           {error}
         </div>
       )}

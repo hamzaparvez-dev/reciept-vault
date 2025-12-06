@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns'
 
@@ -8,12 +7,10 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    const { userId } = await auth()
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const userId = session.user.id
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type') || 'monthly' // monthly, yearly, custom
     const startDate = searchParams.get('startDate')

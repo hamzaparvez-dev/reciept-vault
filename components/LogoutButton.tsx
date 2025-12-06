@@ -1,15 +1,14 @@
 'use client'
 
-import { signOut } from 'next-auth/react'
+import { SignOutButton } from '@clerk/nextjs'
 
 export default function LogoutButton() {
   return (
-    <button
-      onClick={() => signOut({ callbackUrl: '/' })}
-      className="px-4 py-2 text-sm text-gray-700 hover:text-primary-600"
-    >
-      Sign Out
-    </button>
+    <SignOutButton>
+      <button className="px-4 py-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+        Sign Out
+      </button>
+    </SignOutButton>
   )
 }
 

@@ -1,16 +1,19 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@clerk/nextjs/server'
 import ReportsView from '@/components/ReportsView'
+import { syncUserToDatabase } from '@/lib/user-sync'
 
 export default async function ReportsPage() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
+  const { userId } = await auth()
+  if (!userId) return null
+
+  // Sync user to database
+  await syncUserToDatabase(userId)
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports</h1>
-        <p className="text-gray-600">View expense summaries and generate tax reports</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Reports</h1>
+        <p className="text-muted-foreground">View expense summaries and generate tax reports</p>
       </div>
       <ReportsView />
     </div>
