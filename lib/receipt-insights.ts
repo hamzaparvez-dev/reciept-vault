@@ -33,38 +33,38 @@ export async function generateReceiptInsights(
     }
   }
 
+  // Calculate current month spending
+  const now = new Date()
+  const currentMonthReceipts = receipts.filter(
+    r => r.date.getMonth() === now.getMonth() && r.date.getFullYear() === now.getFullYear()
+  )
+  const monthlySpending = currentMonthReceipts.reduce((sum, r) => sum + r.total, 0)
+  
+  // Group by merchant
+  const merchantMap = new Map<string, { count: number; total: number }>()
+  receipts.forEach(r => {
+    const existing = merchantMap.get(r.merchant) || { count: 0, total: 0 }
+    merchantMap.set(r.merchant, {
+      count: existing.count + 1,
+      total: existing.total + r.total,
+    })
+  })
+  
+  const topMerchants = Array.from(merchantMap.entries())
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5)
+  
+  // Group by category
+  const categoryMap = new Map<string, number>()
+  receipts.forEach(r => {
+    const catName = r.category?.name || 'Uncategorized'
+    categoryMap.set(catName, (categoryMap.get(catName) || 0) + r.total)
+  })
+  const categoryBreakdown = Object.fromEntries(categoryMap)
+
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-    
-    // Calculate current month spending
-    const now = new Date()
-    const currentMonthReceipts = receipts.filter(
-      r => r.date.getMonth() === now.getMonth() && r.date.getFullYear() === now.getFullYear()
-    )
-    const monthlySpending = currentMonthReceipts.reduce((sum, r) => sum + r.total, 0)
-    
-    // Group by merchant
-    const merchantMap = new Map<string, { count: number; total: number }>()
-    receipts.forEach(r => {
-      const existing = merchantMap.get(r.merchant) || { count: 0, total: 0 }
-      merchantMap.set(r.merchant, {
-        count: existing.count + 1,
-        total: existing.total + r.total,
-      })
-    })
-    
-    const topMerchants = Array.from(merchantMap.entries())
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5)
-    
-    // Group by category
-    const categoryMap = new Map<string, number>()
-    receipts.forEach(r => {
-      const catName = r.category?.name || 'Uncategorized'
-      categoryMap.set(catName, (categoryMap.get(catName) || 0) + r.total)
-    })
-    const categoryBreakdown = Object.fromEntries(categoryMap)
     
     // Create summary for AI
     const receiptSummary = receipts
@@ -120,7 +120,7 @@ Be helpful and actionable. Focus on saving money and better expense management.`
     return {
       monthlySpending,
       topMerchants,
-      categoryBreakdown: {},
+      categoryBreakdown,
       trends: 'Error generating insights',
       suggestions: [],
       predictedNextMonth: monthlySpending,
