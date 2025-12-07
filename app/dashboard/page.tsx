@@ -39,11 +39,19 @@ export default async function DashboardPage() {
       date: receipt.date.toISOString(),
     }))
 
-    stats = await prisma.receipt.aggregate({
+    const aggregateResult = await prisma.receipt.aggregate({
       where: { userId },
       _sum: { total: true, tax: true },
       _count: true,
     })
+
+    stats = {
+      _count: aggregateResult._count,
+      _sum: {
+        total: aggregateResult._sum.total ?? 0,
+        tax: aggregateResult._sum.tax ?? 0,
+      },
+    }
   } catch (error) {
     console.error('Error fetching receipts:', error)
     // Use default values if database query fails
