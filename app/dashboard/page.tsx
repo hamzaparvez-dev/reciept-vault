@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import ReceiptUpload from '@/components/ReceiptUpload'
 import ReceiptList from '@/components/ReceiptList'
+import ReceiptInsights from '@/components/ReceiptInsights'
 import { checkReceiptLimit } from '@/lib/subscription'
 import { syncUserToDatabase } from '@/lib/user-sync'
 
@@ -9,28 +10,44 @@ export default async function DashboardPage() {
   const { userId } = await auth()
   if (!userId) return null
 
-  // Sync user to database
-  await syncUserToDatabase(userId)
+  // Sync user to database (handle errors gracefully)
+  try {
+    await syncUserToDatabase(userId)
+  } catch (error) {
+    console.error('Error syncing user:', error)
+    // Continue even if sync fails
+  }
+
+  // Get receipt limit check (handles errors internally)
   const limitCheck = await checkReceiptLimit(userId)
 
-  const receiptsData = await prisma.receipt.findMany({
-    where: { userId },
-    include: { category: true },
-    orderBy: { date: 'desc' },
-    take: 20,
-  })
+  // Fetch receipts with error handling
+  let receipts: any[] = []
+  let stats = { _count: 0, _sum: { total: 0, tax: 0 } }
 
-  // Convert Date objects to strings for client component
-  const receipts = receiptsData.map(receipt => ({
-    ...receipt,
-    date: receipt.date.toISOString(),
-  }))
+  try {
+    const receiptsData = await prisma.receipt.findMany({
+      where: { userId },
+      include: { category: true },
+      orderBy: { date: 'desc' },
+      take: 20,
+    })
 
-  const stats = await prisma.receipt.aggregate({
-    where: { userId },
-    _sum: { total: true, tax: true },
-    _count: true,
-  })
+    // Convert Date objects to strings for client component
+    receipts = receiptsData.map(receipt => ({
+      ...receipt,
+      date: receipt.date.toISOString(),
+    }))
+
+    stats = await prisma.receipt.aggregate({
+      where: { userId },
+      _sum: { total: true, tax: true },
+      _count: true,
+    })
+  } catch (error) {
+    console.error('Error fetching receipts:', error)
+    // Use default values if database query fails
+  }
 
   return (
     <div>
@@ -68,6 +85,8 @@ export default async function DashboardPage() {
       <div className="mb-8">
         <ReceiptUpload />
       </div>
+
+      <ReceiptInsights />
 
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-4">Recent Receipts</h2>

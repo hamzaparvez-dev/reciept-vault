@@ -1,6 +1,7 @@
 import { ImageAnnotatorClient } from '@google-cloud/vision'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { Readable } from 'stream'
+import { extractReceiptWithGemini } from './gemini-ocr'
 
 let visionClient: ImageAnnotatorClient | null = null
 let s3Client: S3Client | null = null
@@ -45,6 +46,17 @@ export async function extractReceiptData(
   imageBuffer: Buffer,
   mimeType: string = 'image/jpeg'
 ): Promise<ExtractedReceiptData> {
+  // Try Gemini first (free and more accurate)
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      return await extractReceiptWithGemini(imageBuffer, mimeType)
+    } catch (error) {
+      console.error('Gemini OCR failed, falling back to Google Vision:', error)
+      // Fall through to Google Vision
+    }
+  }
+
+  // Fallback to Google Cloud Vision
   const client = getVisionClient()
   
   if (!client) {

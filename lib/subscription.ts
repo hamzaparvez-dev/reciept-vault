@@ -34,39 +34,49 @@ export async function checkReceiptLimit(userId: string): Promise<{
   limit: number
   current: number
 }> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  })
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    })
 
-  if (!user) {
-    throw new Error('User not found')
-  }
+    if (!user) {
+      // Return default FREE tier limits if user not found
+      const defaultLimit = SUBSCRIPTION_LIMITS.FREE.receiptsPerMonth
+      return { allowed: true, limit: defaultLimit, current: 0 }
+    }
 
-  const tier = user.subscriptionTier as SubscriptionTier
-  const limit = SUBSCRIPTION_LIMITS[tier]?.receiptsPerMonth || 20
+    const tier = user.subscriptionTier as SubscriptionTier
+    const limit = SUBSCRIPTION_LIMITS[tier]?.receiptsPerMonth || 20
 
-  if (limit === Infinity) {
-    return { allowed: true, limit: Infinity, current: 0 }
-  }
+    if (limit === Infinity) {
+      return { allowed: true, limit: Infinity, current: 0 }
+    }
 
-  // Count receipts uploaded this month
-  const startOfMonth = new Date()
-  startOfMonth.setDate(1)
-  startOfMonth.setHours(0, 0, 0, 0)
+    // Count receipts uploaded this month
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
 
-  const current = await prisma.receipt.count({
-    where: {
-      userId,
-      createdAt: {
-        gte: startOfMonth,
+    const current = await prisma.receipt.count({
+      where: {
+        userId,
+        createdAt: {
+          gte: startOfMonth,
+        },
       },
-    },
-  })
+    })
 
-  return {
-    allowed: current < limit,
-    limit,
-    current,
+    return {
+      allowed: current < limit,
+      limit,
+      current,
+    }
+  } catch (error) {
+    // Handle database connection errors gracefully
+    console.error('Error checking receipt limit:', error)
+    // Return default FREE tier limits on error
+    const defaultLimit = SUBSCRIPTION_LIMITS.FREE.receiptsPerMonth
+    return { allowed: true, limit: defaultLimit, current: 0 }
   }
 }
 
